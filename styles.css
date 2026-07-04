@@ -1,0 +1,157 @@
+:root {
+  --bg: #f5f1ea;
+  --card: #ffffff;
+  --ink: #2b2118;
+  --muted: #8a7a6a;
+  --accent: #6f4e37;
+  --accent-dark: #543a28;
+  --crema: #d9a960;
+  --line: #e6ddd1;
+  --danger: #b3502e;
+  --good: #4a7c59;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1611;
+    --card: #29211a;
+    --ink: #f0e8dd;
+    --muted: #a3937f;
+    --accent: #c89364;
+    --accent-dark: #a87947;
+    --crema: #d9a960;
+    --line: #3a2f25;
+    --danger: #d97c56;
+    --good: #7fb08d;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+  padding: 1.5rem 1rem 4rem;
+}
+.wrap { max-width: 640px; margin: 0 auto; }
+header { text-align: center; margin-bottom: 1.5rem; }
+header h1 { font-size: 1.6rem; letter-spacing: -0.02em; }
+header p { color: var(--muted); font-size: 0.9rem; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.card h2 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 0.9rem;
+}
+
+/* Timer */
+.timer-display {
+  font-variant-numeric: tabular-nums;
+  font-size: 3.5rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.02em;
+  margin: 0.25rem 0 0.75rem;
+}
+.timer-display small { font-size: 1.5rem; }
+.timer-display.running { color: var(--crema); }
+.timer-controls { display: flex; gap: 0.6rem; justify-content: center; }
+button {
+  font: inherit;
+  border: none;
+  border-radius: 10px;
+  padding: 0.65rem 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.05s ease, background 0.15s ease;
+}
+button:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-dark); }
+.btn-stop { background: var(--danger); color: #fff; }
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+.btn-ghost:hover { color: var(--ink); }
+
+/* Form */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+.field.full { grid-column: 1 / -1; }
+label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+input {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+}
+input:focus {
+  outline: 2px solid var(--crema);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+.ratio-note {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  color: var(--muted);
+  min-height: 1.3em;
+}
+.ratio-note strong { color: var(--good); }
+.save-row { margin-top: 1rem; display: flex; gap: 0.6rem; align-items: center; }
+.save-row .btn-primary { flex: 1; padding: 0.8rem; }
+.form-error { color: var(--danger); font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.3em; }
+
+/* History */
+.shot {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.8rem 0.9rem;
+  margin-bottom: 0.7rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.shot-info { min-width: 0; }
+.shot-title { font-weight: 700; }
+.shot-meta { font-size: 0.85rem; color: var(--muted); }
+.shot-stats { text-align: right; white-space: nowrap; flex-shrink: 0; }
+.shot-time { font-weight: 700; font-variant-numeric: tabular-nums; }
+.shot-ratio { font-size: 0.85rem; color: var(--good); }
+.shot-date { font-size: 0.75rem; color: var(--muted); }
+.shot-delete {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1rem;
+  padding: 0.1rem 0.3rem;
+  align-self: flex-start;
+}
+.shot-delete:hover { color: var(--danger); }
+.empty { color: var(--muted); text-align: center; padding: 0.75rem 0; font-size: 0.9rem; }
+.history-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.9rem; }
+.history-header h2 { margin-bottom: 0; }
+.clear-all {
+  background: none; border: none;
+  color: var(--muted); font-size: 0.8rem; font-weight: 500;
+  text-decoration: underline; padding: 0;
+}
+.clear-all:hover { color: var(--danger); }
