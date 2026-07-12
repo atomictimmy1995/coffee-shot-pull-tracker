@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// Paste into Firebase console → Firestore Database → Rules (or deploy
+// with `firebase deploy --only firestore:rules`).
+// Each signed-in user can only read and write their own shots.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

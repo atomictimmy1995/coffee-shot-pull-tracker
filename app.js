@@ -1,14 +1,8 @@
 (function () {
   "use strict";
 
-  var STORAGE_KEY = "espresso-shots";
-
-  // Each account gets its own shot history; guests use the original
-  // (pre-accounts) key so existing local data stays visible.
-  function storageKey() {
-    var user = window.Auth && window.Auth.currentUser();
-    return user && user.email ? STORAGE_KEY + ":" + user.email : STORAGE_KEY;
-  }
+  // Storage lives in store.js (window.ShotStore): Firestore for
+  // signed-in users, localStorage for guests.
 
   /* ---------- Timer ---------- */
   var timerDisplay = document.getElementById("timerDisplay");
@@ -83,21 +77,6 @@
   doseIn.addEventListener("input", updateRatio);
   doseOut.addEventListener("input", updateRatio);
 
-  /* ---------- Storage ---------- */
-  function loadShots() {
-    try {
-      var raw = localStorage.getItem(storageKey());
-      var parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function saveShots(shots) {
-    localStorage.setItem(storageKey(), JSON.stringify(shots));
-  }
-
   /* ---------- History rendering ---------- */
   var historyList = document.getElementById("historyList");
   var clearAllBtn = document.getElementById("clearAll");
@@ -108,8 +87,21 @@
     return div.innerHTML;
   }
 
+  var renderToken = 0;
+
   function renderHistory() {
-    var shots = loadShots();
+    if (!window.ShotStore) return; // store.js not loaded yet; it re-renders via authchange
+    var token = ++renderToken;
+    window.ShotStore.list().then(function (shots) {
+      if (token !== renderToken) return; // a newer render superseded this one
+      renderShots(shots);
+    }).catch(function () {
+      if (token !== renderToken) return;
+      historyList.innerHTML = '<div class="empty">Couldn’t load your shots. Check your connection and reload.</div>';
+    });
+  }
+
+  function renderShots(shots) {
     clearAllBtn.hidden = shots.length === 0;
 
     if (shots.length === 0) {
@@ -145,15 +137,12 @@
   historyList.addEventListener("click", function (e) {
     var btn = e.target.closest(".shot-delete");
     if (!btn) return;
-    var id = btn.getAttribute("data-id");
-    saveShots(loadShots().filter(function (s) { return String(s.id) !== id; }));
-    renderHistory();
+    window.ShotStore.remove(btn.getAttribute("data-id")).then(renderHistory);
   });
 
   clearAllBtn.addEventListener("click", function () {
     if (confirm("Delete all recorded shots?")) {
-      saveShots([]);
-      renderHistory();
+      window.ShotStore.clear().then(renderHistory);
     }
   });
 
@@ -180,8 +169,7 @@
       return;
     }
 
-    var shots = loadShots();
-    shots.unshift({
+    window.ShotStore.add({
       id: Date.now(),
       company: company,
       beans: beans,
@@ -191,16 +179,18 @@
       doseOut: isNaN(outVal) ? null : outVal,
       time: isNaN(timeVal) ? null : timeVal,
       date: new Date().toISOString()
+    }).then(function () {
+      renderHistory();
+      form.reset();
+      updateRatio();
+      timerReset.click();
+    }).catch(function () {
+      formError.textContent = "Couldn’t save the shot. Check your connection and try again.";
     });
-    saveShots(shots);
-    renderHistory();
-
-    form.reset();
-    updateRatio();
-    timerReset.click();
   });
 
   document.addEventListener("authchange", renderHistory);
+  document.addEventListener("shotschange", renderHistory);
 
   renderHistory();
 })();
