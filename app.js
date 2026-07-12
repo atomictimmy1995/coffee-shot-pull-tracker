@@ -3,6 +3,13 @@
 
   var STORAGE_KEY = "espresso-shots";
 
+  // Each account gets its own shot history; guests use the original
+  // (pre-accounts) key so existing local data stays visible.
+  function storageKey() {
+    var user = window.Auth && window.Auth.currentUser();
+    return user && user.email ? STORAGE_KEY + ":" + user.email : STORAGE_KEY;
+  }
+
   /* ---------- Timer ---------- */
   var timerDisplay = document.getElementById("timerDisplay");
   var timerBtn = document.getElementById("timerBtn");
@@ -79,7 +86,7 @@
   /* ---------- Storage ---------- */
   function loadShots() {
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
+      var raw = localStorage.getItem(storageKey());
       var parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
@@ -88,7 +95,7 @@
   }
 
   function saveShots(shots) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(shots));
+    localStorage.setItem(storageKey(), JSON.stringify(shots));
   }
 
   /* ---------- History rendering ---------- */
@@ -192,6 +199,8 @@
     updateRatio();
     timerReset.click();
   });
+
+  document.addEventListener("authchange", renderHistory);
 
   renderHistory();
 })();
