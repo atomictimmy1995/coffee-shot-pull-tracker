@@ -95,7 +95,8 @@ label {
   color: var(--muted);
   margin-bottom: 0.3rem;
 }
-input {
+input,
+textarea {
   width: 100%;
   font: inherit;
   color: var(--ink);
@@ -104,7 +105,9 @@ input {
   border-radius: 8px;
   padding: 0.55rem 0.7rem;
 }
-input:focus {
+textarea { resize: vertical; }
+input:focus,
+textarea:focus {
   outline: 2px solid var(--crema);
   outline-offset: -1px;
   border-color: transparent;
@@ -137,6 +140,12 @@ input:focus {
 .shot-time { font-weight: 700; font-variant-numeric: tabular-nums; }
 .shot-ratio { font-size: 0.85rem; color: var(--good); }
 .shot-date { font-size: 0.75rem; color: var(--muted); }
+.shot-comments {
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
 .shot-delete {
   background: none;
   border: none;

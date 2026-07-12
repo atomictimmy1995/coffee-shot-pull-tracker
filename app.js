@@ -123,6 +123,7 @@
         '<div class="shot-info">' +
           '<div class="shot-title">' + esc(title) + '</div>' +
           '<div class="shot-meta">' + metaParts.join(" · ") + '</div>' +
+          (shot.comments ? '<div class="shot-comments">' + esc(shot.comments) + '</div>' : '') +
           '<div class="shot-date">' + when.toLocaleString() + '</div>' +
         '</div>' +
         '<div class="shot-stats">' +
@@ -160,11 +161,12 @@
     var company = document.getElementById("company").value.trim();
     var beans = document.getElementById("beans").value.trim();
     var grind = document.getElementById("grind").value.trim();
+    var comments = document.getElementById("comments").value.trim();
     var inVal = parseFloat(doseIn.value);
     var outVal = parseFloat(doseOut.value);
     var timeVal = parseFloat(shotTimeInput.value);
 
-    var hasAnything = company || beans || grind ||
+    var hasAnything = company || beans || grind || comments ||
       !isNaN(inVal) || !isNaN(outVal) || !isNaN(timeVal);
     if (!hasAnything) {
       formError.textContent = "Add at least one detail before saving.";
@@ -177,6 +179,7 @@
       company: company,
       beans: beans,
       grind: grind,
+      comments: comments,
       doseIn: isNaN(inVal) ? null : inVal,
       doseOut: isNaN(outVal) ? null : outVal,
       time: isNaN(timeVal) ? null : timeVal,

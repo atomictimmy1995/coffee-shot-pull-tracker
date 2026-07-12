@@ -5,7 +5,7 @@ A simple web app for tracking espresso shot pulls — no build step, no dependen
 ## Features
 
 - **Shot timer** — start/stop timer with tenth-of-a-second precision; stopping the timer automatically fills in the shot time field
-- **Shot details** — record the coffee company, beans, grind size, coffee in weight (g), and coffee out weight (g)
+- **Shot details** — record the coffee company, beans, grind size, coffee in weight (g), coffee out weight (g), and free-form comments (tasting notes, adjustments to try)
 - **Brew ratio** — live ratio preview (e.g. `1:2.0`) calculated from the in/out weights
 - **Shot history** — saved shots are listed newest-first with all details, and persist in the browser via `localStorage`
 - **Manage entries** — delete individual shots or clear the whole history
