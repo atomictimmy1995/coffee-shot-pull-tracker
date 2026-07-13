@@ -18,8 +18,7 @@ window.FIREBASE_CONFIG = {
   appId: "1:808855624323:web:ba848334206a702b2b59b6",
   measurementId: "G-L7MZE3JS8B",
 
-  // App Check (bot protection): paste the reCAPTCHA v3 SITE key here once
-  // the app is registered under App Check in the Firebase console.
-  // Empty = App Check disabled.
-  appCheckSiteKey: ""
+  // App Check (bot protection): reCAPTCHA v3 SITE key, registered under
+  // App Check in the Firebase console. Empty = App Check disabled.
+  appCheckSiteKey: "6LcrxFEtAAAAAHD4-xk3Zceg4cK6922RAAGiYzzs"
 };
