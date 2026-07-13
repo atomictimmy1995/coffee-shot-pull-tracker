@@ -114,6 +114,20 @@ header p { color: var(--muted); font-size: 0.9rem; }
   border: 1px solid var(--line);
 }
 .btn-oauth:hover { background: var(--bg); }
+.oauth-primary { margin-bottom: 0.4rem; }
+.btn-oauth-featured {
+  padding: 0.9rem;
+  font-size: 1rem;
+  border-width: 2px;
+  border-color: var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+.oauth-hint {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: -0.1rem;
+}
 .guest-row { text-align: center; margin-top: 1.1rem; font-size: 0.85rem; }
 .guest-row a { color: var(--muted); }
 .guest-row a:hover { color: var(--ink); }
