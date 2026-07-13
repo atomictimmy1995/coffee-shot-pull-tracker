@@ -2,11 +2,52 @@ rules_version = '2';
 
 // Paste into Firebase console → Firestore Database → Rules (or deploy
 // with `firebase deploy --only firestore:rules`).
-// Each signed-in user can only read and write their own shots.
+//
+// Security posture:
+//  - Only the users/{userId}/shots/{shotId} path exists; nothing else is
+//    writable or readable.
+//  - Owners only: a signed-in user can touch only their own shots.
+//  - Verified emails only: blocks throwaway/bot accounts (Google sign-ins
+//    are pre-verified).
+//  - Strict shot schema with size caps: blocks junk/oversized documents
+//    that would burn the free-tier write/storage quota.
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+    function isOwner(userId) {
+      return request.auth != null
+        && request.auth.uid == userId
+        && request.auth.token.email_verified == true;
+    }
+
+    // Optional string field: absent, or a string within the size cap.
+    function strOk(d, k, max) {
+      return !(k in d) || (d[k] is string && d[k].size() <= max);
+    }
+
+    // Optional numeric field: absent, a number, or null.
+    function numOrNull(d, k) {
+      return !(k in d) || d[k] is number || d[k] == null;
+    }
+
+    function validShot() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['id', 'company', 'beans', 'grind', 'comments',
+                               'doseIn', 'doseOut', 'time', 'date'])
+        && d.id is number
+        && d.date is string && d.date.size() <= 40
+        && strOk(d, 'company', 120)
+        && strOk(d, 'beans', 120)
+        && strOk(d, 'grind', 120)
+        && strOk(d, 'comments', 2000)
+        && numOrNull(d, 'doseIn')
+        && numOrNull(d, 'doseOut')
+        && numOrNull(d, 'time');
+    }
+
+    match /users/{userId}/shots/{shotId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validShot();
     }
   }
 }

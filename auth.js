@@ -16,12 +16,14 @@ import {
   connectAuthEmulator,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendEmailVerification,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   signInWithPopup,
   GoogleAuthProvider,
   OAuthProvider
 } from "./vendor/firebase/firebase-auth.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "./vendor/firebase/firebase-app-check.js";
 
 const SESSION_KEY = "espresso-session";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,6 +38,22 @@ export const firebaseConfigured = configured;
 const auth = configured ? getAuth(firebaseApp) : null;
 if (auth && config.useEmulators) {
   connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+}
+
+/*
+ * App Check: proves requests come from this app (not scripts abusing the
+ * public API key). Inert until appCheckSiteKey is set in firebase-config.js
+ * and the app is registered under App Check in the Firebase console.
+ */
+if (firebaseApp && config.appCheckSiteKey) {
+  if (config.useEmulators || location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+    // Local development: use a debug token instead of real reCAPTCHA.
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
+  initializeAppCheck(firebaseApp, {
+    provider: new ReCaptchaV3Provider(config.appCheckSiteKey),
+    isTokenAutoRefreshEnabled: true
+  });
 }
 
 /* ---------- guest session ---------- */
@@ -90,7 +108,12 @@ function notConfiguredError() {
 function currentUser() {
   if (isGuest()) return { guest: true };
   const u = auth && auth.currentUser;
-  return u ? { email: u.email, uid: u.uid } : null;
+  if (!u) return null;
+  // Email/password accounts must verify before using the app (the
+  // Firestore rules also enforce this server-side). Google accounts
+  // arrive with emailVerified already true.
+  if (!u.emailVerified) return { unverified: true, email: u.email };
+  return { email: u.email, uid: u.uid };
 }
 
 function signUp(email, password) {
@@ -103,7 +126,34 @@ function signUp(email, password) {
     return Promise.reject(new Error("Password must be at least 8 characters."));
   }
   setGuest(false);
-  return createUserWithEmailAndPassword(auth, email, password).catch(rethrowFriendly);
+  return createUserWithEmailAndPassword(auth, email, password)
+    .then(function (cred) {
+      // Best-effort: the verify panel has a resend button if this fails.
+      return sendEmailVerification(cred.user).catch(function () {});
+    })
+    .catch(rethrowFriendly);
+}
+
+function resendVerification() {
+  if (!auth || !auth.currentUser) return Promise.reject(new Error("Not signed in."));
+  return sendEmailVerification(auth.currentUser).catch(rethrowFriendly);
+}
+
+function refreshVerification() {
+  if (!auth || !auth.currentUser) return Promise.resolve(false);
+  return auth.currentUser.reload().then(function () {
+    if (!auth.currentUser.emailVerified) {
+      emitChange();
+      return false;
+    }
+    // Force-refresh the ID token: the email_verified claim lives in the
+    // token, and Firestore rules check the token — without this, writes
+    // stay denied until the old token expires (up to an hour).
+    return auth.currentUser.getIdToken(true).then(function () {
+      emitChange();
+      return true;
+    });
+  });
 }
 
 function signIn(email, password) {
@@ -159,7 +209,9 @@ window.Auth = {
   signIn,
   signInAsGuest,
   signOut,
-  oauthSignIn
+  oauthSignIn,
+  resendVerification,
+  refreshVerification
 };
 
 /* ---------- UI wiring ---------- */
@@ -178,6 +230,12 @@ const authConfigNote = document.getElementById("authConfigNote");
 const userEmailEl = document.getElementById("userEmail");
 const signOutBtn = document.getElementById("signOutBtn");
 const guestLink = document.getElementById("guestLink");
+const verifyView = document.getElementById("verifyView");
+const verifyEmailEl = document.getElementById("verifyEmail");
+const verifyRefresh = document.getElementById("verifyRefresh");
+const verifyResend = document.getElementById("verifyResend");
+const verifySignOut = document.getElementById("verifySignOut");
+const verifyNote = document.getElementById("verifyNote");
 
 let mode = "signin"; // or "signup"
 
@@ -203,11 +261,20 @@ if (!configured) {
 
 function render() {
   const user = currentUser();
+  const unverified = !!(user && user.unverified);
+  const active = !!(user && !user.unverified);
   authView.hidden = !!user;
-  appView.hidden = !user;
-  if (user) {
-    userEmailEl.textContent = user.guest ? "Guest" : user.email;
+  verifyView.hidden = !unverified;
+  appView.hidden = !active;
+  if (unverified) {
+    verifyEmailEl.textContent = user.email;
   } else {
+    verifyNote.textContent = "";
+  }
+  if (active) {
+    userEmailEl.textContent = user.guest ? "Guest" : user.email;
+  }
+  if (!user) {
     authForm.reset();
     setMode("signin");
   }
@@ -254,6 +321,25 @@ guestLink.addEventListener("click", (e) => {
 });
 
 signOutBtn.addEventListener("click", signOut);
+
+/* verify panel */
+verifyRefresh.addEventListener("click", () => {
+  verifyNote.textContent = "";
+  refreshVerification().then((verified) => {
+    if (!verified) {
+      verifyNote.textContent = "Not verified yet — click the link in the email (check spam), then try again.";
+    }
+  });
+});
+
+verifyResend.addEventListener("click", () => {
+  verifyNote.textContent = "";
+  resendVerification()
+    .then(() => { verifyNote.textContent = "Verification email sent."; })
+    .catch((err) => { verifyNote.textContent = err.message; });
+});
+
+verifySignOut.addEventListener("click", signOut);
 
 document.addEventListener("authchange", render);
 

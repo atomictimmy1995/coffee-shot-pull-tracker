@@ -59,6 +59,20 @@
     <p class="guest-row"><a href="#" id="guestLink">Continue as guest</a></p>
   </section>
 
+  <section class="card auth-card" id="verifyView" hidden>
+    <h2>Verify Your Email</h2>
+    <p class="verify-text">
+      We sent a verification link to <strong id="verifyEmail"></strong>.
+      Click it, then come back here.
+    </p>
+    <button type="button" class="btn-primary auth-submit" id="verifyRefresh">I've verified — continue</button>
+    <div class="verify-actions">
+      <button type="button" class="btn-ghost btn-small" id="verifyResend">Resend email</button>
+      <button type="button" class="btn-ghost btn-small" id="verifySignOut">Sign out</button>
+    </div>
+    <div class="verify-note" id="verifyNote"></div>
+  </section>
+
   <div id="appView" hidden>
     <div class="user-bar">
       <span class="user-email" id="userEmail"></span>

@@ -7,7 +7,7 @@ A web app for tracking espresso shot pulls — plain HTML/CSS/JS, no build step.
 - **Shot timer** — start/stop timer with tenth-of-a-second precision; stopping the timer automatically fills in the shot time field
 - **Shot details** — record the coffee company, beans, grind size, coffee in weight (g), coffee out weight (g), and free-form comments (tasting notes, adjustments to try)
 - **Brew ratio** — live ratio preview (e.g. `1:2.0`) calculated from the in/out weights
-- **Accounts** — sign up with email/password or Google; your shot history is stored in Firestore and follows you across devices. On first sign-in, shots saved on the device can be imported into the account.
+- **Accounts** — sign up with email/password (with email verification) or Google; your shot history is stored in Firestore and follows you across devices. On first sign-in, shots saved on the device can be imported into the account.
 - **Guest mode** — no account needed; shots stay in the browser's `localStorage`
 - **Shot history** — newest-first with all details, per-entry delete and clear-all
 - Light and dark mode, following your system preference
@@ -61,6 +61,33 @@ npx firebase-tools emulators:start --project demo-espresso --only auth,firestore
 ```
 
 Then set `useEmulators: true` in `firebase-config.js` with `projectId: "demo-espresso"` and any `apiKey`.
+
+## Security / abuse protection
+
+All free, layered:
+
+| Protection | What it stops | Where |
+|---|---|---|
+| Owner-only security rules | Reading or writing anyone else's data | `firestore.rules` |
+| **Email verification required** | Throwaway/bot accounts using the database (Google sign-ins are pre-verified) | `firestore.rules` (`email_verified`) + verify-email panel in the app |
+| **Strict document validation** | Junk/oversized writes burning the free-tier quota (field allowlist, size caps, only the `shots` path) | `firestore.rules` |
+| **App Check** (reCAPTCHA v3) | Scripts calling Firestore/Auth directly with the public API key | `auth.js` + console enforcement |
+| Email-enumeration protection | Probing which emails have accounts | Console toggle |
+| No credit card on file | Any surprise bill — worst case the app pauses at the daily quota | Spark plan |
+
+### Enabling App Check (console steps)
+
+1. Create a **reCAPTCHA v3** key at [google.com/recaptcha/admin](https://www.google.com/recaptcha/admin) with domains `<your-username>.github.io` and `localhost`.
+2. Firebase console → **App Check → Apps** → register the web app with the reCAPTCHA v3 **secret key**.
+3. Put the **site key** in `firebase-config.js` → `appCheckSiteKey`, push. (Empty site key = App Check off.)
+4. Watch App Check metrics for a day, then flip **Enforce** for **Firestore**.
+5. Optional, strongest: upgrade Auth to **Identity Platform** (free ≤ 50k MAU) and enforce App Check on **Authentication** too — this blocks even scripted account creation. Without it, scripts can still create accounts, but unverified accounts can't touch the database.
+
+Note: reCAPTCHA v3 loads its script from Google at runtime — the app's one external dependency, unavoidable for bot protection.
+
+### Also enable in the console
+
+- **Authentication → Settings → User actions → Email enumeration protection** — makes unknown-email and wrong-password errors indistinguishable.
 
 ## Free-tier limits
 
