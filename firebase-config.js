@@ -10,10 +10,11 @@
  * Until this is filled in, the app runs in guest-only mode.
  */
 window.FIREBASE_CONFIG = {
-  apiKey: "PASTE_YOUR_API_KEY",
-  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-  projectId: "PASTE_YOUR_PROJECT_ID",
-  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
-  messagingSenderId: "PASTE_YOUR_SENDER_ID",
-  appId: "PASTE_YOUR_APP_ID"
+  apiKey: "AIzaSyAHqvUnv8bqs5a0Jh14T_FdO_5WXz39cCw",
+  authDomain: "coffee-shot-tracker.firebaseapp.com",
+  projectId: "coffee-shot-tracker",
+  storageBucket: "coffee-shot-tracker.firebasestorage.app",
+  messagingSenderId: "808855624323",
+  appId: "1:808855624323:web:ba848334206a702b2b59b6",
+  measurementId: "G-L7MZE3JS8B"
 };
