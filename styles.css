@@ -56,6 +56,7 @@
   --color-divider: #e2dfda;
 
   --color-accent: #b68235;
+  --color-accent-rgb: 182, 130, 53;
   --color-accent-100: #f5ecdd;
   --color-accent-200: #e9d7b8;
   --color-accent-300: #dcc191;
@@ -74,12 +75,38 @@
   --shadow-sm: 0 1px 2px rgba(32, 31, 29, 0.14);
 }
 
+/*
+ * Dark theme: an after-hours espresso bar rather than an inverted
+ * light theme — warm near-black (not blue-black), lifted card
+ * surfaces instead of relying on shadow for elevation, and a
+ * brightened gold ramp so accent text stays legible against the dark
+ * surface (the light theme's darker 700/800 golds would sink into it).
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #1a1512;
+    --color-surface: #251f19;
+    --color-text: #ece5d8;
+    --color-divider: #3c3226;
+
+    --color-accent: #c6944c;
+    --color-accent-rgb: 198, 148, 76;
+    --color-accent-100: #372c1c;
+    --color-accent-200: #4c3c22;
+    --color-accent-300: #6e5730;
+    --color-accent-700: #dcae66;
+    --color-accent-800: #efc98c;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+  }
+}
+
 @keyframes pageIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes rowIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes softPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(178, 130, 53, 0.22); }
-  50% { box-shadow: 0 0 0 10px rgba(178, 130, 53, 0.10); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--color-accent-rgb), 0.22); }
+  50% { box-shadow: 0 0 0 10px rgba(var(--color-accent-rgb), 0.10); }
 }
 @keyframes checkIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
 
