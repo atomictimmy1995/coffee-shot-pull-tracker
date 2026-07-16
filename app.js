@@ -4,8 +4,18 @@
   // Storage lives in store.js (window.ShotStore): Firestore for
   // signed-in users, localStorage for guests.
 
+  // Set text and replay the fade-in animation (used for inline errors).
+  window.uiFlash = function (el, text) {
+    el.textContent = text;
+    el.classList.remove("flash");
+    if (!text) return;
+    void el.offsetWidth; // reflow so the animation restarts
+    el.classList.add("flash");
+  };
+
   /* ---------- Timer ---------- */
   var timerDisplay = document.getElementById("timerDisplay");
+  var timerRing = document.getElementById("timerRing");
   var timerBtn = document.getElementById("timerBtn");
   var timerReset = document.getElementById("timerReset");
   var shotTimeInput = document.getElementById("shotTime");
@@ -33,6 +43,7 @@
       timerBtn.classList.remove("btn-primary");
       timerBtn.classList.add("btn-stop");
       timerDisplay.classList.add("running");
+      timerRing.classList.add("running");
       rafId = requestAnimationFrame(tick);
     } else {
       running = false;
@@ -43,6 +54,7 @@
       timerBtn.classList.remove("btn-stop");
       timerBtn.classList.add("btn-primary");
       timerDisplay.classList.remove("running");
+      timerRing.classList.remove("running");
       shotTimeInput.value = elapsed.toFixed(1);
     }
   });
@@ -56,6 +68,7 @@
     timerBtn.classList.remove("btn-stop");
     timerBtn.classList.add("btn-primary");
     timerDisplay.classList.remove("running");
+    timerRing.classList.remove("running");
   });
 
   /* ---------- Ratio preview ---------- */
@@ -70,9 +83,21 @@
     return null;
   }
 
+  var ratioShown = false;
+
   function updateRatio() {
     var r = ratioText(parseFloat(doseIn.value), parseFloat(doseOut.value));
-    ratioNote.innerHTML = r ? "Brew ratio: <strong>" + r + "</strong>" : "";
+    if (!r) {
+      ratioNote.innerHTML = "";
+      ratioShown = false;
+    } else if (!ratioShown) {
+      // Rebuild only when the note first appears so the fade-in plays
+      // once, not on every keystroke.
+      ratioNote.innerHTML = '<span class="flash">Brew ratio: <strong>' + r + "</strong></span>";
+      ratioShown = true;
+    } else {
+      ratioNote.querySelector("strong").textContent = r;
+    }
   }
   doseIn.addEventListener("input", updateRatio);
   doseOut.addEventListener("input", updateRatio);
@@ -109,7 +134,7 @@
       return;
     }
 
-    historyList.innerHTML = shots.map(function (shot) {
+    historyList.innerHTML = shots.map(function (shot, i) {
       var title = [shot.company, shot.beans].filter(Boolean).join(" — ") || "Unnamed shot";
       var metaParts = [];
       if (shot.grind) metaParts.push("Grind " + esc(shot.grind));
@@ -118,7 +143,7 @@
       var r = ratioText(shot.doseIn, shot.doseOut);
       var when = new Date(shot.date);
 
-      return '<div class="shot">' +
+      return '<div class="shot" style="animation-delay:' + (i * 45) + 'ms">' +
         '<div class="shot-info">' +
           '<div class="shot-title">' + esc(title) + '</div>' +
           '<div class="shot-meta">' + metaParts.join(" · ") + '</div>' +
@@ -128,8 +153,8 @@
         '<div class="shot-stats">' +
           (shot.time != null ? '<div class="shot-time">' + esc(String(shot.time)) + 's</div>' : '') +
           (r ? '<div class="shot-ratio">' + r + '</div>' : '') +
+          '<button class="shot-delete" data-id="' + shot.id + '" title="Delete shot" aria-label="Delete shot">✕</button>' +
         '</div>' +
-        '<button class="shot-delete" data-id="' + shot.id + '" title="Delete shot" aria-label="Delete shot">✕</button>' +
       '</div>';
     }).join("");
   }
@@ -137,7 +162,13 @@
   historyList.addEventListener("click", function (e) {
     var btn = e.target.closest(".shot-delete");
     if (!btn) return;
-    window.ShotStore.remove(btn.getAttribute("data-id")).then(renderHistory);
+    var id = btn.getAttribute("data-id");
+    // Animate the row out (fade, slide right, collapse) before removing.
+    var row = btn.closest(".shot");
+    row.classList.add("removing");
+    setTimeout(function () {
+      window.ShotStore.remove(id).then(renderHistory);
+    }, 320);
   });
 
   clearAllBtn.addEventListener("click", function () {
@@ -149,6 +180,18 @@
   /* ---------- Form ---------- */
   var form = document.getElementById("shotForm");
   var formError = document.getElementById("formError");
+  var saveBtn = document.getElementById("saveShotBtn");
+  var savedTimer = null;
+
+  function showSaved() {
+    saveBtn.classList.add("saved");
+    saveBtn.textContent = "Saved ✓";
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(function () {
+      saveBtn.classList.remove("saved");
+      saveBtn.textContent = "Save Shot";
+    }, 1400);
+  }
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -165,7 +208,7 @@
     var hasAnything = company || beans || grind || comments ||
       !isNaN(inVal) || !isNaN(outVal) || !isNaN(timeVal);
     if (!hasAnything) {
-      formError.textContent = "Add at least one detail before saving.";
+      window.uiFlash(formError, "Add at least one detail before saving.");
       return;
     }
 
@@ -184,8 +227,9 @@
       form.reset();
       updateRatio();
       timerReset.click();
+      showSaved();
     }).catch(function () {
-      formError.textContent = "Couldn’t save the shot. Check your connection and try again.";
+      window.uiFlash(formError, "Couldn’t save the shot. Check your connection and try again.");
     });
   });
 

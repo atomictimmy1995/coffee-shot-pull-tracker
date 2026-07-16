@@ -217,6 +217,7 @@ window.Auth = {
 /* ---------- UI wiring ---------- */
 const authView = document.getElementById("authView");
 const appView = document.getElementById("appView");
+const authTabs = document.getElementById("authTabs");
 const tabSignIn = document.getElementById("tabSignIn");
 const tabSignUp = document.getElementById("tabSignUp");
 const authForm = document.getElementById("authForm");
@@ -244,6 +245,7 @@ function setMode(next) {
   const signup = mode === "signup";
   tabSignIn.classList.toggle("active", !signup);
   tabSignUp.classList.toggle("active", signup);
+  authTabs.classList.toggle("mode-signup", signup); // slides the underline
   confirmField.hidden = !signup;
   authConfirm.required = signup;
   authSubmit.textContent = signup ? "Create Account" : "Sign In";
@@ -272,7 +274,7 @@ function render() {
     verifyNote.textContent = "";
   }
   if (active) {
-    userEmailEl.textContent = user.guest ? "Guest" : user.email;
+    userEmailEl.textContent = user.guest ? "Guest session" : user.email;
   }
   if (!user) {
     authForm.reset();
@@ -289,7 +291,7 @@ authForm.addEventListener("submit", (e) => {
   let action;
   if (mode === "signup") {
     if (password !== authConfirm.value) {
-      authError.textContent = "Passwords do not match.";
+      window.uiFlash(authError, "Passwords do not match.");
       return;
     }
     action = signUp(email, password);
@@ -299,7 +301,7 @@ authForm.addEventListener("submit", (e) => {
   authSubmit.disabled = true;
   action
     .catch((err) => {
-      authError.textContent = err.message;
+      window.uiFlash(authError, err.message);
     })
     .then(() => {
       authSubmit.disabled = !configured;
@@ -311,7 +313,7 @@ authView.addEventListener("click", (e) => {
   if (!btn) return;
   authError.textContent = "";
   oauthSignIn(btn.getAttribute("data-oauth")).catch((err) => {
-    authError.textContent = err.message;
+    window.uiFlash(authError, err.message);
   });
 });
 
